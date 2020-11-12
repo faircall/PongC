@@ -50,6 +50,10 @@ void move_paddle(Paddle *paddle, Ball ball, float dt);
 
 float distance(float x, float y);
 
+float float_min(float x, float y);
+
+float float_max(float x, float y);
+
 int main(int argc, char **argv)
 {
 
@@ -71,11 +75,11 @@ int main(int argc, char **argv)
     /////////////Game specific values/////////////
     Color white = {0xff, 0xff, 0xff, 0x00};
     Paddle paddle_p1 = init_paddle(0.0f, 20.0f, 10.0f, 50.0f);
-    Paddle paddle_p2 = init_paddle(SCREENWIDTH-50.0f, 20.0f, 10.0f, 50.0f);
+    Paddle paddle_p2 = init_paddle(SCREENWIDTH-10.0f, 20.0f, 10.0f, 50.0f);
     Ball ball = init_ball(SCREENWIDTH/2, SCREENHEIGHT/2, -1.0f, 0.5f);
     int mouse_x;
     int mouse_y;
-    float ball_speed = 200.0f;
+    float ball_speed = 300.0f;
     float dt;
     unsigned int current_time, time_elapsed, last_time = 0;
     
@@ -217,9 +221,42 @@ void reset_ball(Ball *ball)
 
 void move_paddle(Paddle *paddle, Ball ball, float dt)
 {
-    float max_move_speed = 100.0f;
+    
     float distance_to_ball_x = distance(ball.position.x, paddle->position.x);
-    float distance_to_ball_y = distance(ball.position.y, paddle->position.y);
+    float distance_to_ball_y = distance(ball.position.y,paddle->position.y + paddle->height/2);
+    float signed_distance_to_ball_y = ball.position.y - (paddle->position.y + paddle->height/2);
+    float reflex_scale = float_max(distance_to_ball_x,1.0f)/SCREENWIDTH;//between 0,1
+    float reflect_lerped = 1.0f - reflex_scale;
+    float max_move_speed = 250.0f*reflect_lerped;
+
+    float direction;
+
+    if (signed_distance_to_ball_y > 0) {
+	direction = 1.0f;
+    } else if (signed_distance_to_ball_y < 0) {
+	direction = -1.0f;
+    } else {
+	direction = 0.0f;
+    }
+    if (distance_to_ball_y > paddle->height/4) {
+	paddle->position.y += direction*max_move_speed * dt;
+    }
+}
+
+float float_min(float x, float y)
+{
+    if (x <= y) {
+	return x;
+    }
+    return y;
+}
+
+float float_max(float x, float y)
+{
+    if (x >= y) {
+	return x;
+    }
+    return y;
 }
 
 float distance(float x, float y)
